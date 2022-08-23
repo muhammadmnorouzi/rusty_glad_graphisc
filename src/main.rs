@@ -4,13 +4,16 @@
 #[macro_use]
 extern crate glium;
 
-use glium::{Surface,glutin::{
-    event::{Event, WindowEvent},
-    dpi::LogicalSize,
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
-    ContextBuilder,
-}};
+use glium::{
+    glutin::{
+        dpi::LogicalSize,
+        event::{Event, WindowEvent},
+        event_loop::{ControlFlow, EventLoop},
+        window::WindowBuilder,
+        ContextBuilder,
+    },
+    implement_vertex, Surface,
+};
 use std::time::{Duration, Instant};
 
 pub fn main() {
@@ -24,21 +27,26 @@ pub fn main() {
     let display = glium::Display::new(window_builder, context_builder, &event_loop)
         .expect("failed to create Display object");
 
-    event_loop.run(move |event, _, control_flow| {
+    let shape = vec![
+        Vertex::create(-0.5, -0.5),
+        Vertex::create(0.0, 0.0),
+        Vertex::create(0.5, -0.25),
+    ];
 
+    event_loop.run(move |event, _, control_flow| {
         let mut target_frame = display.draw();
-        target_frame.clear_color(0.5 , 0.0 , 1.0 , 0.5);
+        target_frame.clear_color(0.5, 0.0, 1.0, 0.5);
         target_frame.finish().expect("failed to draw on screen");
 
         let next_frame_time = Instant::now() + Duration::from_nanos(17_000_000);
         *control_flow = ControlFlow::WaitUntil(next_frame_time);
 
         match event {
-            Event::WindowEvent{event , ..} => match event {
+            Event::WindowEvent { event, .. } => match event {
                 WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit;
                     return;
-                },
+                }
                 _ => return,
             },
             _ => (),
@@ -46,7 +54,15 @@ pub fn main() {
     });
 }
 
-#[derive(Clone , Copy)]
+#[derive(Clone, Copy)]
 struct Vertex {
-    position : [f32;2],
+    position: [f32; 2],
+}
+
+implement_vertex!(Vertex, position);
+
+impl Vertex {
+    fn create(x: f32, y: f32) -> Self {
+        Self { position: [x, y] }
+    }
 }
