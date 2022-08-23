@@ -7,7 +7,7 @@ extern crate glium;
 use glium::{
     glutin::{
         dpi::LogicalSize,
-        event::{Event, WindowEvent},
+        event::{self, Event, StartCause},
         event_loop::{ControlFlow, EventLoop},
         window::WindowBuilder,
         ContextBuilder,
@@ -29,15 +29,6 @@ pub fn main() {
 
     let display = glium::Display::new(window_builder, context_builder, &event_loop)
         .expect("failed to create Display object");
-
-    let shape = vec![
-        Vertex::create(-0.5, -0.5),
-        Vertex::create(0.0, 0.0),
-        Vertex::create(0.5, -0.25),
-    ];
-
-    let vertex_buffer =
-        VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
 
     let indices = NoIndices(PrimitiveType::TrianglesList);
 
@@ -64,30 +55,55 @@ pub fn main() {
     let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
         .expect("failed to create program!");
 
+    let mut t: f32 = -0.5;
     event_loop.run(move |event, _, control_flow| {
-        
+        match event {
+            Event::WindowEvent { event, .. } => match event {
+                event::WindowEvent::CloseRequested => {
+                    *control_flow = ControlFlow::Exit;
+                    return;
+                }
+                _ => return,
+            },
+            Event::NewEvents(reason) => match reason {
+                event::StartCause::ResumeTimeReached { .. } => (),
+                event::StartCause::Init => (),
+                _ => return,
+            },
+            _ => return,
+        }
+
+        t += 0.0002;
+        if t > 0.5 {
+            t = -0.5;
+        }
+
+        let shape = vec![
+            Vertex::create(-0.5 + t, -0.5),
+            Vertex::create(0.0 + t, 0.0),
+            Vertex::create(0.5 + t, -0.25),
+        ];
+
+        let vertex_buffer =
+            VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
+
         let mut target_frame = display.draw();
         target_frame.clear_color(0.5, 0.0, 1.0, 0.5);
-        
+
         target_frame
-            .draw(&vertex_buffer, &indices, &program, &EmptyUniforms , &Default::default())
+            .draw(
+                &vertex_buffer,
+                &indices,
+                &program,
+                &EmptyUniforms,
+                &Default::default(),
+            )
             .expect("failed to draw program!");
 
         target_frame.finish().expect("failed to draw on screen");
 
         let next_frame_time = Instant::now() + Duration::from_nanos(17_000_000);
         *control_flow = ControlFlow::WaitUntil(next_frame_time);
-
-        match event {
-            Event::WindowEvent { event, .. } => match event {
-                WindowEvent::CloseRequested => {
-                    *control_flow = ControlFlow::Exit;
-                    return;
-                }
-                _ => return,
-            },
-            _ => (),
-        }
     });
 }
 
