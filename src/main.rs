@@ -36,9 +36,12 @@ pub fn main() {
             #version 140
 
             in vec2 position;
+            uniform float step;
 
             void main() {
-                gl_Position = vec4(position , 0.0 , 1.0);
+                vec2 pos = position;
+                pos.x += step;
+                gl_Position = vec4(pos , 0.0 , 1.0);
             }
         "#;
 
@@ -54,6 +57,16 @@ pub fn main() {
 
     let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
         .expect("failed to create program!");
+
+        
+        let shape = vec![
+            Vertex::create(-0.5, -0.5),
+            Vertex::create(0.0, 0.0),
+            Vertex::create(0.5, -0.25),
+        ];
+
+        let vertex_buffer =
+            VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
 
     let mut t: f32 = -0.5;
     event_loop.run(move |event, _, control_flow| {
@@ -78,19 +91,10 @@ pub fn main() {
             _ => return,
         }
 
-        t += 0.0002;
+        t += 0.005;
         if t > 0.5 {
             t = -0.5;
         }
-
-        let shape = vec![
-            Vertex::create(-0.5 + t, -0.5),
-            Vertex::create(0.0 + t, 0.0),
-            Vertex::create(0.5 + t, -0.25),
-        ];
-
-        let vertex_buffer =
-            VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
 
         let mut target_frame = display.draw();
         target_frame.clear_color(0.5, 0.0, 1.0, 0.5);
@@ -100,7 +104,8 @@ pub fn main() {
                 &vertex_buffer,
                 &indices,
                 &program,
-                &EmptyUniforms,
+                // &EmptyUniforms,
+                &uniform!{step:t},
                 &Default::default(),
             )
             .expect("failed to draw program!");
