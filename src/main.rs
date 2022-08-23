@@ -36,12 +36,10 @@ pub fn main() {
             #version 140
 
             in vec2 position;
-            uniform float step;
+            uniform mat4 matrix;
 
             void main() {
-                vec2 pos = position;
-                pos.x += step;
-                gl_Position = vec4(pos , 0.0 , 1.0);
+                gl_Position = matrix * vec4(position , 0.0 , 1.0);
             }
         "#;
 
@@ -58,15 +56,14 @@ pub fn main() {
     let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
         .expect("failed to create program!");
 
-        
-        let shape = vec![
-            Vertex::create(-0.5, -0.5),
-            Vertex::create(0.0, 0.0),
-            Vertex::create(0.5, -0.25),
-        ];
+    let shape = vec![
+        Vertex::create(-0.5, -0.5),
+        Vertex::create(0.0, 0.0),
+        Vertex::create(0.5, -0.25),
+    ];
 
-        let vertex_buffer =
-            VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
+    let vertex_buffer =
+        VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
 
     let mut t: f32 = -0.5;
     event_loop.run(move |event, _, control_flow| {
@@ -75,7 +72,7 @@ pub fn main() {
                 event::WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit;
                     return;
-                },
+                }
                 event::WindowEvent::Focused(focused) => {
                     if focused {
                         t += 0.05;
@@ -96,6 +93,15 @@ pub fn main() {
             t = -0.5;
         }
 
+        let uniforms = uniform! {
+            matrix: [
+                [1.0,0.0,0.0,t],
+                [0.0,1.0,0.0,0.0],
+                [0.0,0.0,1.0,0.0],
+                [t,0.0,0.0,1.0f32],
+            ]
+        };
+
         let mut target_frame = display.draw();
         target_frame.clear_color(0.5, 0.0, 1.0, 0.5);
 
@@ -105,7 +111,7 @@ pub fn main() {
                 &indices,
                 &program,
                 // &EmptyUniforms,
-                &uniform!{step:t},
+                &uniforms,
                 &Default::default(),
             )
             .expect("failed to draw program!");
