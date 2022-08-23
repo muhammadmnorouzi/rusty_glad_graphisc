@@ -45,3 +45,8 @@ pub fn main() {
         }
     });
 }
+
+#[derive(Clone , Copy)]
+struct Vertex {
+    position : [f32;2],
+}
