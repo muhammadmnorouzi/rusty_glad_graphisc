@@ -40,6 +40,26 @@ pub fn main() {
 
     let indices = NonIndices(PrimitiveType::TrianglesList);
 
+    let vertex_shader_src = r#"
+            #version 140
+
+            in vec2 position;
+
+            void main() {
+                gl_Position = vec4(position , 0.0 , 1.0);
+            }
+        "#;
+
+        let fragment_shader_src = r#"
+            #version 140
+
+            out vec4 color;
+
+            void main() {
+                color = vec4(1.0,0.0,0.0,1.0);
+            }
+        "#;
+
     event_loop.run(move |event, _, control_flow| {
         let mut target_frame = display.draw();
         target_frame.clear_color(0.5, 0.0, 1.0, 0.5);
