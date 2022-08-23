@@ -37,8 +37,10 @@ pub fn main() {
 
             in vec2 position;
             uniform mat4 matrix;
+            out vec2 out_pos;
 
             void main() {
+                out_pos = position;
                 gl_Position = matrix * vec4(position , 0.0 , 1.0);
             }
         "#;
@@ -46,10 +48,15 @@ pub fn main() {
     let fragment_shader_src = r#"
             #version 140
 
+            in vec2 out_pos;
             out vec4 color;
 
             void main() {
-                color = vec4(1.0,1.0,0.0,1.0);
+                // color = vec4(1.0,1.0,0.0,1.0);
+                vec2 pos = out_pos;
+                pos.x += 0.3;
+                pos.y -= 0.1;
+                color = vec4(0.0 ,pos,1.0);
             }
         "#;
 
@@ -103,7 +110,7 @@ pub fn main() {
         };
 
         let mut target_frame = display.draw();
-        target_frame.clear_color(0.5, 0.0, 1.0, 0.5);
+        target_frame.clear_color(0.9, 0.6, 0.3, 1.0);
 
         target_frame
             .draw(
