@@ -62,6 +62,11 @@ pub fn main() {
                 event::WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit;
                     return;
+                },
+                event::WindowEvent::Focused(focused) => {
+                    if focused {
+                        t += 0.05;
+                    }
                 }
                 _ => return,
             },
