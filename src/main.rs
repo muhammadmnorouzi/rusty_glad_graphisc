@@ -13,8 +13,9 @@ use glium::{
         ContextBuilder,
     },
     implement_vertex,
-    index::{NonIndices, PrimitiveType},
-    Surface, VertexBuffer,
+    index::{NoIndices, PrimitiveType},
+    uniforms::EmptyUniforms,
+    Program, Surface, VertexBuffer,
 };
 use std::time::{Duration, Instant};
 
@@ -38,7 +39,7 @@ pub fn main() {
     let vertex_buffer =
         VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
 
-    let indices = NonIndices(PrimitiveType::TrianglesList);
+    let indices = NoIndices(PrimitiveType::TrianglesList);
 
     let vertex_shader_src = r#"
             #version 140
@@ -50,19 +51,28 @@ pub fn main() {
             }
         "#;
 
-        let fragment_shader_src = r#"
+    let fragment_shader_src = r#"
             #version 140
 
             out vec4 color;
 
             void main() {
-                color = vec4(1.0,0.0,0.0,1.0);
+                color = vec4(1.0,1.0,0.0,1.0);
             }
         "#;
 
+    let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
+        .expect("failed to create program!");
+
     event_loop.run(move |event, _, control_flow| {
+        
         let mut target_frame = display.draw();
         target_frame.clear_color(0.5, 0.0, 1.0, 0.5);
+        
+        target_frame
+            .draw(&vertex_buffer, &indices, &program, &EmptyUniforms , &Default::default())
+            .expect("failed to draw program!");
+
         target_frame.finish().expect("failed to draw on screen");
 
         let next_frame_time = Instant::now() + Duration::from_nanos(17_000_000);
