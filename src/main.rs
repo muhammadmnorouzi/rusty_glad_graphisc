@@ -12,7 +12,9 @@ use glium::{
         window::WindowBuilder,
         ContextBuilder,
     },
-    implement_vertex, Surface,
+    implement_vertex,
+    index::{NonIndices, PrimitiveType},
+    Surface, VertexBuffer,
 };
 use std::time::{Duration, Instant};
 
@@ -32,6 +34,11 @@ pub fn main() {
         Vertex::create(0.0, 0.0),
         Vertex::create(0.5, -0.25),
     ];
+
+    let vertex_buffer =
+        VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
+
+    let indices = NonIndices(PrimitiveType::TrianglesList);
 
     event_loop.run(move |event, _, control_flow| {
         let mut target_frame = display.draw();
