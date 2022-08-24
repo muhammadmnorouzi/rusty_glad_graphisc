@@ -53,10 +53,7 @@ pub fn main() {
 
             void main() {
                 // color = vec4(1.0,1.0,0.0,1.0);
-                vec2 pos = out_pos;
-                pos.x += 0.3;
-                pos.y -= 0.1;
-                color = vec4(0.0 ,pos,1.0);
+                color = vec4(out_pos,0.0 ,1.0);
             }
         "#;
 
