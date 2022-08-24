@@ -3,6 +3,7 @@
 
 #[macro_use]
 extern crate glium;
+extern crate image;
 
 use glium::{
     glutin::{
@@ -17,7 +18,13 @@ use glium::{
     uniforms::EmptyUniforms,
     Program, Surface, VertexBuffer,
 };
-use std::time::{Duration, Instant};
+use std::{
+    fs,
+    io::Cursor,
+    path::Path,
+    time::{Duration, Instant},
+    vec::Vec,
+};
 
 pub fn main() {
     let mut event_loop = EventLoop::new();
@@ -68,6 +75,18 @@ pub fn main() {
 
     let vertex_buffer =
         VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
+
+    let image_path = Path::new(".").join("src").join("resources").join("opengl.jpg");
+    println!("{:?}" , image_path);
+    let image_content: Vec<u8> = fs::read(image_path).expect("failed to find image!");
+
+    let image = image::load(
+        // Cursor::new(&include_bytes!("../resources/duck.png")),
+        Cursor::new(&image_content),
+        image::ImageFormat::Jpeg,
+    )
+    .expect("failed to load image!")
+    .to_rgba8();
 
     let mut t: f32 = -0.5;
     event_loop.run(move |event, _, control_flow| {
