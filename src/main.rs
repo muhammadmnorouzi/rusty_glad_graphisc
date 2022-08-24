@@ -8,6 +8,8 @@ extern crate image;
 mod teapot;
 
 use glium::{
+    DrawParameters , Depth ,
+    draw_parameters::DepthTest,
     glutin::{
         dpi::LogicalSize,
         event::{self, Event, StartCause},
@@ -31,7 +33,7 @@ use std::{
 
 pub fn main() {
     let mut event_loop = EventLoop::new();
-    let context_builder = ContextBuilder::new();
+    let context_builder = ContextBuilder::new().with_depth_buffer(24);
 
     let window_builder = WindowBuilder::new()
         .with_inner_size(LogicalSize::new(720, 480))
@@ -114,7 +116,16 @@ pub fn main() {
         };
 
         let mut target_frame = display.draw();
-        target_frame.clear_color(0.0, 0.0, 1.0, 1.0);
+        target_frame.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
+
+        let params = DrawParameters{
+            depth: Depth{
+                test: DepthTest::IfLess,
+                write: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
 
         target_frame
             .draw(
@@ -123,7 +134,7 @@ pub fn main() {
                 &program,
                 // &EmptyUniforms,
                 &uniforms,
-                &Default::default(),
+                &params,
             )
             .expect("failed to draw program!");
 
