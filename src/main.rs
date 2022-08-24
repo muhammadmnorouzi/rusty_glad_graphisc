@@ -15,6 +15,7 @@ use glium::{
     },
     implement_vertex,
     index::{NoIndices, PrimitiveType},
+    texture::{RawImage2d, SrgbTexture2d},
     uniforms::EmptyUniforms,
     Program, Surface, VertexBuffer,
 };
@@ -43,10 +44,15 @@ pub fn main() {
             #version 140
 
             in vec2 position;
-            uniform mat4 matrix;
+            in vec2 tex_coords;
+
+            out vec2 v_tex_coords;
             out vec2 out_pos;
 
+            uniform mat4 matrix;
+
             void main() {
+                v_tex_coords = tex_coords;
                 out_pos = position;
                 gl_Position = matrix * vec4(position , 0.0 , 1.0);
             }
@@ -55,12 +61,13 @@ pub fn main() {
     let fragment_shader_src = r#"
             #version 140
 
-            in vec2 out_pos;
+            in vec2 v_tex_coords;
             out vec4 color;
 
+            uniform sampler2D tex;
+
             void main() {
-                // color = vec4(1.0,1.0,0.0,1.0);
-                color = vec4(out_pos,0.0 ,1.0);
+                color = texture(tex , v_tex_coords);
             }
         "#;
 
@@ -68,16 +75,19 @@ pub fn main() {
         .expect("failed to create program!");
 
     let shape = vec![
-        Vertex::create(-0.5, -0.5),
-        Vertex::create(0.0, 0.0),
-        Vertex::create(0.5, -0.25),
+        Vertex::create([-0.5, -0.5], [0.0, 0.0]),
+        Vertex::create([0.0, 0.0], [0.0, 1.0]),
+        Vertex::create([0.5, -0.25], [1.0, 0.0]),
     ];
 
     let vertex_buffer =
         VertexBuffer::new(&display, &shape).expect("failed to create vertex buffer!");
 
-    let image_path = Path::new(".").join("src").join("resources").join("opengl.jpg");
-    println!("{:?}" , image_path);
+    let image_path = Path::new(".")
+        .join("src")
+        .join("resources")
+        .join("opengl.jpg");
+    println!("file path : {:?}", image_path);
     let image_content: Vec<u8> = fs::read(image_path).expect("failed to find image!");
 
     let image = image::load(
@@ -87,6 +97,12 @@ pub fn main() {
     )
     .expect("failed to load image!")
     .to_rgba8();
+
+    let image_dimensions = image.dimensions();
+    println!("image dimensions : {:?}", image_dimensions);
+
+    let image = RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
+    let texture = SrgbTexture2d::new(&display, image).expect("failed to create texture!");
 
     let mut t: f32 = -0.5;
     event_loop.run(move |event, _, control_flow| {
@@ -122,7 +138,8 @@ pub fn main() {
                 [0.0,1.0,0.0,0.0],
                 [0.0,0.0,1.0,0.0],
                 [t,0.0,0.0,1.0f32],
-            ]
+            ],
+            tex: &texture
         };
 
         let mut target_frame = display.draw();
@@ -149,12 +166,16 @@ pub fn main() {
 #[derive(Clone, Copy)]
 struct Vertex {
     position: [f32; 2],
+    tex_coords: [f32; 2],
 }
 
-implement_vertex!(Vertex, position);
+implement_vertex!(Vertex, position, tex_coords);
 
 impl Vertex {
-    fn create(x: f32, y: f32) -> Self {
-        Self { position: [x, y] }
+    fn create(position: [f32; 2], tex_coords: [f32; 2]) -> Self {
+        Self {
+            position,
+            tex_coords,
+        }
     }
 }
