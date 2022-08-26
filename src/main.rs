@@ -8,7 +8,7 @@ extern crate image;
 mod teapot;
 
 use glium::{
-    draw_parameters::DepthTest,
+    draw_parameters::{BackfaceCullingMode, DepthTest},
     glutin::{
         dpi::LogicalSize,
         event::{self, Event, StartCause},
@@ -144,6 +144,7 @@ pub fn main() {
                 write: true,
                 ..Default::default()
             },
+            backface_culling: BackfaceCullingMode::CullClockwise,
             ..Default::default()
         };
 
