@@ -8,7 +8,6 @@ extern crate image;
 mod teapot;
 
 use glium::{
-    DrawParameters , Depth ,
     draw_parameters::DepthTest,
     glutin::{
         dpi::LogicalSize,
@@ -21,7 +20,7 @@ use glium::{
     index::{NoIndices, PrimitiveType},
     texture::{RawImage2d, SrgbTexture2d},
     uniforms::EmptyUniforms,
-    IndexBuffer, Program, Surface, VertexBuffer,
+    Depth, DrawParameters, IndexBuffer, Program, Surface, VertexBuffer,
 };
 use std::{
     fs,
@@ -57,11 +56,12 @@ pub fn main() {
 
             out vec3 v_normal;
 
+            uniform mat4 perspective;
             uniform mat4 matrix;
 
             void main() {
                 v_normal = transpose(inverse(mat3(matrix))) * normal;
-                gl_Position = matrix * vec4(position, 1.0);
+                gl_Position = perspective * matrix * vec4(position, 1.0);
             }
         "#;
 
@@ -103,23 +103,43 @@ pub fn main() {
             _ => return,
         }
 
-        let s: f32 = 0.008;
+        let s: f32 = 0.002;
+
+        let mut target_frame = display.draw();
+
+        let perspective = {
+            let (width, height) = target_frame.get_dimensions();
+            let aspect_ration = height as f32 / width as f32;
+
+            let fov: f32 = 3.141592 / 3.0;
+            let znear = 0.1;
+            let zfar = 1024.0;
+
+            let f = 1.0 / (fov / 2.0).tan();
+
+            [
+                [f * aspect_ration, 0.0, 0.0, 0.0],
+                [0.0, f, 0.0, 0.0],
+                [0.0, 0.0, (zfar + znear) / (zfar - znear), 1.0],
+                [0.0, 0.0, -(2.0 * zfar * znear) / (zfar - znear), 0.0],
+            ]
+        };
 
         let uniforms = uniform! {
             matrix: [
                 [s,0.0,0.0,0.0],
                 [0.0,s,0.0,0.0],
                 [0.0,0.0,s,0.0],
-                [0.0,0.0,0.0,1.0],
+                [0.0,0.0,0.6,1.0],
             ],
-            u_light: [-1.0 , 0.4 , 0.9f32]
+            u_light: [-1.0 , 0.4 , 0.9f32],
+            perspective: perspective,
         };
 
-        let mut target_frame = display.draw();
         target_frame.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
 
-        let params = DrawParameters{
-            depth: Depth{
+        let params = DrawParameters {
+            depth: Depth {
                 test: DepthTest::IfLess,
                 write: true,
                 ..Default::default()
